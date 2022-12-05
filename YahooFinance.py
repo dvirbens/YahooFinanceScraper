@@ -17,18 +17,33 @@ class YahooFinance:
         """
 
         url = f'https://finance.yahoo.com/quote/{stock_name}'
+        url_ana = f'https://finance.yahoo.com/quote/{stock_name}/analysis?p={stock_name}'
         r = req.get(url, headers=cls.headers)
-        # print(r.status_code)
+        r_ana = req.get(url_ana, headers=cls.headers)
         soup = BeautifulSoup(r.text, 'html.parser')
-        # print(soup.title.text)
+        soup_ana=BeautifulSoup(r_ana.text, 'html.parser')
+        profit = ""
+        profit_percentage = 0
+        target_estimate = soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text
+
+        if target_estimate == 'N/A':
+            profit = -1
+            profit_percentage = -1
+        else:
+            last_open_value = float(soup.find('td', {'data-test': 'OPEN-value'}).text)
+            profit = float(target_estimate) - last_open_value
+            profit_percentage = profit/last_open_value*100
+
         stock = {
             'StockName': soup.find('h1', {'class': 'D(ib) Fz(18px)'}).text,
             'CurrPrice': soup.find('td', {'data-test': 'OPEN-value'}).text,
             'TargetEST': soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text,
-#            'Profit': float(soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text) -
-#                      float(soup.find('td', {'data-test': 'OPEN-value'}).text)
+            'Profit':  profit,
+            'ProfitPercentage': profit_percentage,
+            'avgEstimate': soup_ana.find_all('td', {'class': "Ta(end)"})[6].text
         }
         return stock
+
 
     @classmethod
     def get_all_most_active_stocks(cls) -> list:
@@ -37,7 +52,7 @@ class YahooFinance:
         :return:
         """
         stocks=[]
-        url = "https://finance.yahoo.com/most-active?offset=0&count=100"
+        url = "https://finance.yahoo.com/most-active?offset=0&count=5"
         requests_stocks = req.get(url=url, headers=cls.headers)
         target_class = 'simpTblRow Bgc($hoverBgColor):h BdB Bdbc($seperatorColor) Bdbc($tableBorderBlue):h H(32px) Bgc($lv2BgColor) '
         soup = BeautifulSoup(requests_stocks.text, 'html.parser')
