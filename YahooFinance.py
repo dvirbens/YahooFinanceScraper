@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests as req
 import pandas as pd
 import xlwt
+from enums import NumberOfStocks
 
 
 class YahooFinance:
@@ -83,14 +84,14 @@ class YahooFinance:
         return stock
 
     @classmethod
-    def get_all_most_active_stocks(cls, number_of_stoks_to_get: int) -> list:
+    def get_all_most_active_stocks(cls, number_of_stoks_to_get: NumberOfStocks) -> list:
         """
 
         :return: list of number_of_stocks_to_get most active stocks symbol
                 Example:['TSLA', 'AMZN', 'AAPL', ....]
         """
         stocks = []
-        url = f"https://finance.yahoo.com/most-active?offset=0&count={number_of_stoks_to_get}"
+        url = f"https://finance.yahoo.com/most-active?offset=0&count={number_of_stoks_to_get.value}"
         requests_stocks = req.get(url=url, headers=cls.headers)
         target_class = 'simpTblRow Bgc($hoverBgColor):h BdB Bdbc($seperatorColor) Bdbc($tableBorderBlue):h H(32px) Bgc($lv2BgColor) '
         soup = BeautifulSoup(requests_stocks.text, 'html.parser')
