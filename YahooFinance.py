@@ -28,21 +28,24 @@ class YahooFinance:
                    "profit_in_percentage":"50.6%",
                    "earning_average_estimate":"4.11",
                    "earning_average_estimate_percentage":"28.8%",
-                   "marketCap":"615.32B"
+                   "market_cap":"615.32B"
                 }
         """
 
         url = f'https://finance.yahoo.com/quote/{stock_name}'
         url_ana = f'https://finance.yahoo.com/quote/{stock_name}/analysis?p={stock_name}'
         url_mem = f'https://finance.yahoo.com/quote/{stock_name}/key-statistics?p={stock_name}'
+        url_profile = f'https://finance.yahoo.com/quote/{stock_name}/profile?p={stock_name}'
 
         r = req.get(url, headers=cls.headers)
         r_ana = req.get(url_ana, headers=cls.headers)
         r_mem = req.get(url_mem, headers=cls.headers)
+        r_profile = req.get(url_profile, headers=cls.headers)
 
         soup = BeautifulSoup(r.text, 'html.parser')
         soup_ana = BeautifulSoup(r_ana.text, 'html.parser')
         soup_mem = BeautifulSoup(r_mem.text, 'html.parser')
+        soup_profile = BeautifulSoup(r_profile.text, 'html.parser')
 
         profit = ""
         profit_percentage = 0
@@ -67,19 +70,21 @@ class YahooFinance:
 
         try:
             earning_average_estimate = soup_ana.find_all('td', {'class': "Ta(end)"})[6].text
-        except Exception:
+        except Exception as e:
             earning_average_estimate = "N/A"
 
         stock = {
             'stock_name': soup.find('h1', {'class': 'D(ib) Fz(18px)'}).text,
+            #'industry':soup_profile.find('span',{'class':'Fw(600)'}),
             'current_price': soup.find('td', {'data-test': 'OPEN-value'}).text,
             'estimated_price': soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text,
+            'forward_dividend': soup.find('td', {'data-test': 'DIVIDEND_AND_YIELD-value'}).text,
             'earning_per_share': soup.find('td', {'data-test': 'EPS_RATIO-value'}).text,
             'profit': round(profit, 2),
             'profit_in_percentage': f'{round(profit_percentage, 1)}%',
             'earning_average_estimate': earning_average_estimate,
             'earning_average_estimate_percentage': round(avg_earning_in_percentage, 1),
-            'marketCap': soup_mem.find('td', {'class': 'Fw(500) Ta(end) Pstart(10px) Miw(60px)'}).text
+            'market_cap': soup_mem.find('td', {'class': 'Fw(500) Ta(end) Pstart(10px) Miw(60px)'}).text
         }
         return stock
 
@@ -113,6 +118,7 @@ class YahooFinance:
         cls._create_stocks_info_sheet(stocks_info=stocks_info, work_book=wb)
         cls._create_estimated_profit_sheet(stocks_info=stocks_info, work_book=wb)
         cls._create_average_earning_estimation_sheet(stocks_info=stocks_info, work_book=wb)
+        cls._create_divident_sheet(stocks_info=stocks_info, work_book=wb)
         wb.save("most_active_stocks_info.xls")
 
     @staticmethod
@@ -123,24 +129,24 @@ class YahooFinance:
         :param work_book:
         :return:
         """
-        sheet1 = work_book.add_sheet("most_active_stocks_info")
+        sheet = work_book.add_sheet("most_active_stocks_info")
         style = xlwt.easyxf('font: bold 1')
-        sheet1.write(0, 0, "Stock Name", style)
-        sheet1.write(0, 1, "Current Price", style)
-        sheet1.write(0, 2, "Target EST", style)
-        sheet1.write(0, 3, "Profit", style)
-        sheet1.write(0, 4, "Profit in Percentage", style)
-        sheet1.write(0, 5, "avgEstimate", style)
-        sheet1.write(0, 6, "marketCap", style)
+        sheet.write(0, 0, "Stock Name", style)
+        sheet.write(0, 1, "Current Price", style)
+        sheet.write(0, 2, "Target EST", style)
+        sheet.write(0, 3, "Profit", style)
+        sheet.write(0, 4, "Profit in Percentage", style)
+        sheet.write(0, 5, "avgEstimate", style)
+        sheet.write(0, 6, "marketCap", style)
         exel_row = 1
         for stock in stocks_info:
-            sheet1.write(exel_row, 0, stock['stock_name'])
-            sheet1.write(exel_row, 1, stock['current_price'])
-            sheet1.write(exel_row, 2, stock['estimated_price'])
-            sheet1.write(exel_row, 3, stock['profit'])
-            sheet1.write(exel_row, 4, stock['profit_in_percentage'])
-            sheet1.write(exel_row, 5, stock['earning_average_estimate'])
-            sheet1.write(exel_row, 6, stock['marketCap'])
+            sheet.write(exel_row, 0, stock['stock_name'])
+            sheet.write(exel_row, 1, stock['current_price'])
+            sheet.write(exel_row, 2, stock['estimated_price'])
+            sheet.write(exel_row, 3, stock['profit'])
+            sheet.write(exel_row, 4, stock['profit_in_percentage'])
+            sheet.write(exel_row, 5, stock['earning_average_estimate'])
+            sheet.write(exel_row, 6, stock['market_cap'])
             exel_row += 1
 
     @staticmethod
@@ -152,19 +158,19 @@ class YahooFinance:
         :return:
         """
         stocks_info_sorted = sorted(stocks_info, key=lambda d: d['earning_average_estimate_percentage'], reverse=True)
-        sheet1 = work_book.add_sheet("Top earning per share stocks")
+        sheet = work_book.add_sheet("Top earning per share stocks")
         style = xlwt.easyxf('font: bold 1')
-        sheet1.write(0, 0, "Stock Name", style)
-        sheet1.write(0, 1, "Earning Per Share ", style)
-        sheet1.write(0, 2, "Earning per share analyst estimation", style)
-        sheet1.write(0, 3, "Earning growth in percentage", style)
+        sheet.write(0, 0, "Stock Name", style)
+        sheet.write(0, 1, "Earning Per Share ", style)
+        sheet.write(0, 2, "Earning per share analyst estimation", style)
+        sheet.write(0, 3, "Earning growth in percentage", style)
         exel_row = 1
         for stock in stocks_info_sorted:
-            sheet1.write(exel_row, 0, stock['stock_name'])
-            sheet1.write(exel_row, 1, stock['earning_per_share'])
-            sheet1.write(exel_row, 2, stock['earning_average_estimate'])
+            sheet.write(exel_row, 0, stock['stock_name'])
+            sheet.write(exel_row, 1, stock['earning_per_share'])
+            sheet.write(exel_row, 2, stock['earning_average_estimate'])
             earning = stock['earning_average_estimate_percentage']
-            sheet1.write(exel_row, 3, f'{earning}%')
+            sheet.write(exel_row, 3, f'{earning}%')
             exel_row += 1
 
     @staticmethod
@@ -176,18 +182,37 @@ class YahooFinance:
         :return:
         """
         stocks_info_sorted = sorted(stocks_info, key=lambda d: d['profit_in_percentage'], reverse=True)
-        sheet1 = work_book.add_sheet("Top estimated profitable stocks")
+        sheet = work_book.add_sheet("Top estimated profitable stocks")
         style = xlwt.easyxf('font: bold 1')
-        sheet1.write(0, 0, "Stock Name", style)
-        sheet1.write(0, 1, "Current Price", style)
-        sheet1.write(0, 2, "Analysts stock price estimation", style)
-        sheet1.write(0, 3, "Profit", style)
-        sheet1.write(0, 4, "Profit in Percentage", style)
+        sheet.write(0, 0, "Stock Name", style)
+        sheet.write(0, 1, "Current Price", style)
+        sheet.write(0, 2, "Analysts stock price estimation", style)
+        sheet.write(0, 3, "Profit", style)
+        sheet.write(0, 4, "Profit in Percentage", style)
         exel_row = 1
         for stock in stocks_info_sorted:
-            sheet1.write(exel_row, 0, stock['stock_name'])
-            sheet1.write(exel_row, 1, stock['current_price'])
-            sheet1.write(exel_row, 2, stock['estimated_price'])
-            sheet1.write(exel_row, 3, stock['profit'])
-            sheet1.write(exel_row, 4, stock['profit_in_percentage'])
+            sheet.write(exel_row, 0, stock['stock_name'])
+            sheet.write(exel_row, 1, stock['current_price'])
+            sheet.write(exel_row, 2, stock['estimated_price'])
+            sheet.write(exel_row, 3, stock['profit'])
+            sheet.write(exel_row, 4, stock['profit_in_percentage'])
+            exel_row += 1
+
+    @staticmethod
+    def _create_divident_sheet(stocks_info: list, work_book):
+        """
+
+        :param stocks_info: list of dicts with stocks information
+        :param work_book:
+        :return:
+        """
+        stocks_info_sorted = sorted(stocks_info, key=lambda d: d['profit_in_percentage'], reverse=True)
+        sheet = work_book.add_sheet("Top divident shared")
+        style = xlwt.easyxf('font: bold 1')
+        sheet.write(0, 0, "Stock Name", style)
+        sheet.write(0, 1, "Divident", style)
+        exel_row = 1
+        for stock in stocks_info_sorted:
+            sheet.write(exel_row, 0, stock['stock_name'])
+            sheet.write(exel_row, 1, stock['forward_dividend'])
             exel_row += 1
