@@ -1,34 +1,48 @@
 from bs4 import BeautifulSoup
 import requests as req
 import pandas as pd
+import xlwt
 
 
 class YahooFinance:
     """
     class of yahoo finance data scraping
     """
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'}
 
     @classmethod
-    def get_stock_info(cls, stock_name: str) -> dict[str, any]:
+    def get_stock_info(cls, stock_name: str) -> dict:
         """
 
-        :return:
+        :return: dictionary of stock information
+                example:
+                {
+                   "stock_name":"Tesla, Inc. (TSLA)",
+                   "current_price":"175.03",
+                   "estimated_price":"263.65",
+                   "earning_per_share":"3.19",
+                   "profit":88.61,
+                   "profit_in_percentage":"50.6%",
+                   "earning_average_estimate":"4.11",
+                   "earning_average_estimate_percentage":"28.8%",
+                   "marketCap":"615.32B"
+                }
         """
 
         url = f'https://finance.yahoo.com/quote/{stock_name}'
         url_ana = f'https://finance.yahoo.com/quote/{stock_name}/analysis?p={stock_name}'
         url_mem = f'https://finance.yahoo.com/quote/{stock_name}/key-statistics?p={stock_name}'
-        
+
         r = req.get(url, headers=cls.headers)
         r_ana = req.get(url_ana, headers=cls.headers)
         r_mem = req.get(url_mem, headers=cls.headers)
-        
+
         soup = BeautifulSoup(r.text, 'html.parser')
         soup_ana = BeautifulSoup(r_ana.text, 'html.parser')
         soup_mem = BeautifulSoup(r_mem.text, 'html.parser')
-        
+
         profit = ""
         profit_percentage = 0
         target_estimate = soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text
@@ -39,28 +53,34 @@ class YahooFinance:
         else:
             last_open_value = float(soup.find('td', {'data-test': 'OPEN-value'}).text)
             profit = float(target_estimate) - last_open_value
-            profit_percentage = profit/last_open_value*100
+            profit_percentage = profit / last_open_value * 100
+
+        esp = float(soup.find('td', {'data-test': 'EPS_RATIO-value'}).text)
+        avg_earning = float(soup_ana.find_all('td', {'class': "Ta(end)"})[6].text)
+        avg_earning_in_percentage = ((avg_earning - esp) / esp) * 100
 
         stock = {
-            'StockName': soup.find('h1', {'class': 'D(ib) Fz(18px)'}).text,
-            'CurrPrice': soup.find('td', {'data-test': 'OPEN-value'}).text,
-            'TargetEST': soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text,
-            'Profit':  profit,
-            'ProfitPercentage': profit_percentage,
-            'avgEstimate': soup_ana.find_all('td', {'class': "Ta(end)"})[6].text,
+            'stock_name': soup.find('h1', {'class': 'D(ib) Fz(18px)'}).text,
+            'current_price': soup.find('td', {'data-test': 'OPEN-value'}).text,
+            'estimated_price': soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text,
+            'earning_per_share': soup.find('td', {'data-test': 'EPS_RATIO-value'}).text,
+            'profit': round(profit, 2),
+            'profit_in_percentage': f'{round(profit_percentage, 1)}%',
+            'earning_average_estimate': soup_ana.find_all('td', {'class': "Ta(end)"})[6].text,
+            'earning_average_estimate_percentage': round(avg_earning_in_percentage, 1),
             'marketCap': soup_mem.find('td', {'class': 'Fw(500) Ta(end) Pstart(10px) Miw(60px)'}).text
         }
         return stock
 
-
     @classmethod
-    def get_all_most_active_stocks(cls) -> list:
+    def get_all_most_active_stocks(cls, number_of_stoks_to_get: int) -> list:
         """
 
-        :return:
+        :return: list of number_of_stocks_to_get most active stocks symbol
+                Example:['TSLA', 'AMZN', 'AAPL', ....]
         """
-        stocks=[]
-        url = "https://finance.yahoo.com/most-active?offset=0&count=5"
+        stocks = []
+        url = f"https://finance.yahoo.com/most-active?offset=0&count={number_of_stoks_to_get}"
         requests_stocks = req.get(url=url, headers=cls.headers)
         target_class = 'simpTblRow Bgc($hoverBgColor):h BdB Bdbc($seperatorColor) Bdbc($tableBorderBlue):h H(32px) Bgc($lv2BgColor) '
         soup = BeautifulSoup(requests_stocks.text, 'html.parser')
@@ -71,13 +91,92 @@ class YahooFinance:
             stocks.append(name.text)
 
         return stocks
-    
-    
+
     @classmethod
-    def stocks_info_to_excel_file(stocks_info: list[dict[str, str, str, float, float, str, str]]) -> any:
+    def stocks_info_to_excel_file(cls, stocks_info: list) -> any:
         """
 
         :return:
         """
-        data_file = pd.DataFrame.from_dict(stocks_info)
-        data_file.to_excel('stocks_info.xlsx')
+        wb = xlwt.Workbook()
+        cls._create_stocks_info_sheet(stocks_info=stocks_info, work_book=wb)
+        cls._create_estimated_profit_sheet(stocks_info=stocks_info, work_book=wb)
+        cls._create_average_earning_estimation_sheet(stocks_info=stocks_info, work_book=wb)
+        wb.save("most_active_stocks_info.xls")
+
+    @staticmethod
+    def _create_stocks_info_sheet(stocks_info, work_book):
+        """
+
+        :param stocks_info: list of dicts with stocks information
+        :param work_book:
+        :return:
+        """
+        sheet1 = work_book.add_sheet("most_active_stocks_info")
+        style = xlwt.easyxf('font: bold 1')
+        sheet1.write(0, 0, "Stock Name", style)
+        sheet1.write(0, 1, "Current Price", style)
+        sheet1.write(0, 2, "Target EST", style)
+        sheet1.write(0, 3, "Profit", style)
+        sheet1.write(0, 4, "Profit in Percentage", style)
+        sheet1.write(0, 5, "avgEstimate", style)
+        sheet1.write(0, 6, "marketCap", style)
+        exel_row = 1
+        for stock in stocks_info:
+            sheet1.write(exel_row, 0, stock['stock_name'])
+            sheet1.write(exel_row, 1, stock['current_price'])
+            sheet1.write(exel_row, 2, stock['estimated_price'])
+            sheet1.write(exel_row, 3, stock['profit'])
+            sheet1.write(exel_row, 4, stock['profit_in_percentage'])
+            sheet1.write(exel_row, 5, stock['earning_average_estimate'])
+            sheet1.write(exel_row, 6, stock['marketCap'])
+            exel_row += 1
+
+    @staticmethod
+    def _create_average_earning_estimation_sheet(stocks_info: list, work_book):
+        """
+
+        :param stocks_info: list of dicts with stocks information
+        :param work_book:
+        :return:
+        """
+        stocks_info_sorted = sorted(stocks_info, key=lambda d: d['earning_average_estimate_percentage'], reverse=True)
+        sheet1 = work_book.add_sheet("Top earning per share stocks")
+        style = xlwt.easyxf('font: bold 1')
+        sheet1.write(0, 0, "Stock Name", style)
+        sheet1.write(0, 1, "Earning Per Share ", style)
+        sheet1.write(0, 2, "Earning per share analyst estimation", style)
+        sheet1.write(0, 3, "Earning growth in percentage", style)
+        exel_row = 1
+        for stock in stocks_info_sorted:
+            sheet1.write(exel_row, 0, stock['stock_name'])
+            sheet1.write(exel_row, 1, stock['earning_per_share'])
+            sheet1.write(exel_row, 2, stock['earning_average_estimate'])
+            earning = stock['earning_average_estimate_percentage']
+            sheet1.write(exel_row, 3, f'{earning}%')
+            exel_row += 1
+
+    @staticmethod
+    def _create_estimated_profit_sheet(stocks_info: list, work_book):
+        """
+
+        :param stocks_info: list of dicts with stocks information
+        :param work_book:
+        :return:
+        """
+        stocks_info_sorted = sorted(stocks_info, key=lambda d: d['profit_in_percentage'], reverse=True)
+        sheet1 = work_book.add_sheet("Top estimated profitable stocks")
+        style = xlwt.easyxf('font: bold 1')
+        sheet1.write(0, 0, "Stock Name", style)
+        sheet1.write(0, 1, "Current Price", style)
+        sheet1.write(0, 2, "Analysts stock price estimation", style)
+        sheet1.write(0, 3, "Profit", style)
+        sheet1.write(0, 4, "Profit in Percentage", style)
+        exel_row = 1
+        for stock in stocks_info_sorted:
+            sheet1.write(exel_row, 0, stock['stock_name'])
+            sheet1.write(exel_row, 1, stock['current_price'])
+            sheet1.write(exel_row, 2, stock['estimated_price'])
+            sheet1.write(exel_row, 3, stock['profit'])
+            sheet1.write(exel_row, 4, stock['profit_in_percentage'])
+            exel_row += 1

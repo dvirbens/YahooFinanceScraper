@@ -1,6 +1,6 @@
 from YahooFinance import YahooFinance
 
-stocks = YahooFinance.get_all_most_active_stocks()
+stocks = YahooFinance.get_all_most_active_stocks(number_of_stoks_to_get=3)
 stocks_info = []
 cnt = 0
 
@@ -9,6 +9,6 @@ for stock in stocks:
     print(cnt)
     cnt += 1
 
-#sorted_list = sorted(stocks_info, key=lambda d: d['ProfitPercentage'], reverse=True)
-print(stocks_info)
-x=5
+# sorted_list = sorted(stocks_info, key=lambda d: d['ProfitPercentage'], reverse=True)
+YahooFinance.stocks_info_to_excel_file(stocks_info)
+x = 5
