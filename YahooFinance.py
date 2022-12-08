@@ -55,9 +55,19 @@ class YahooFinance:
             profit = float(target_estimate) - last_open_value
             profit_percentage = profit / last_open_value * 100
 
-        esp = float(soup.find('td', {'data-test': 'EPS_RATIO-value'}).text)
-        avg_earning = float(soup_ana.find_all('td', {'class': "Ta(end)"})[6].text)
-        avg_earning_in_percentage = ((avg_earning - esp) / esp) * 100
+        esp = soup.find('td', {'data-test': 'EPS_RATIO-value'}).text
+
+        if esp == 'N/A':
+            avg_earning_in_percentage = -1
+        else:
+            esp = float(esp)
+            avg_earning = float(soup_ana.find_all('td', {'class': "Ta(end)"})[6].text)
+            avg_earning_in_percentage = ((avg_earning - esp) / esp) * 100
+
+        try:
+            earning_average_estimate = soup_ana.find_all('td', {'class': "Ta(end)"})[6].text
+        except Exception:
+            earning_average_estimate = "N/A"
 
         stock = {
             'stock_name': soup.find('h1', {'class': 'D(ib) Fz(18px)'}).text,
@@ -66,7 +76,7 @@ class YahooFinance:
             'earning_per_share': soup.find('td', {'data-test': 'EPS_RATIO-value'}).text,
             'profit': round(profit, 2),
             'profit_in_percentage': f'{round(profit_percentage, 1)}%',
-            'earning_average_estimate': soup_ana.find_all('td', {'class': "Ta(end)"})[6].text,
+            'earning_average_estimate': earning_average_estimate,
             'earning_average_estimate_percentage': round(avg_earning_in_percentage, 1),
             'marketCap': soup_mem.find('td', {'class': 'Fw(500) Ta(end) Pstart(10px) Miw(60px)'}).text
         }
