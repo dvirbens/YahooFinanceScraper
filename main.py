@@ -10,6 +10,5 @@ for stock in stocks:
     print(f'{cnt} {stock}')
     cnt += 1
 
-# sorted_list = sorted(stocks_info, key=lambda d: d['ProfitPercentage'], reverse=True)
 YahooFinance.stocks_info_to_excel_file(stocks_info)
 x = 5

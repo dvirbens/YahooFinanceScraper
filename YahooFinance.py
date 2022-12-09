@@ -35,21 +35,19 @@ class YahooFinance:
         url = f'https://finance.yahoo.com/quote/{stock_name}'
         url_ana = f'https://finance.yahoo.com/quote/{stock_name}/analysis?p={stock_name}'
         url_mem = f'https://finance.yahoo.com/quote/{stock_name}/key-statistics?p={stock_name}'
-        url_profile = f'https://finance.yahoo.com/quote/{stock_name}/profile?p={stock_name}'
 
         r = req.get(url, headers=cls.headers)
         r_ana = req.get(url_ana, headers=cls.headers)
         r_mem = req.get(url_mem, headers=cls.headers)
-        r_profile = req.get(url_profile, headers=cls.headers)
 
         soup = BeautifulSoup(r.text, 'html.parser')
         soup_ana = BeautifulSoup(r_ana.text, 'html.parser')
         soup_mem = BeautifulSoup(r_mem.text, 'html.parser')
-        soup_profile = BeautifulSoup(r_profile.text, 'html.parser')
 
         profit = ""
         profit_percentage = 0
         target_estimate = soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text
+        sector, industry = cls._get_sector_and_industry_of_stock(stock_name=stock_name)
 
         if target_estimate == 'N/A':
             profit = -1
@@ -75,7 +73,8 @@ class YahooFinance:
 
         stock = {
             'stock_name': soup.find('h1', {'class': 'D(ib) Fz(18px)'}).text,
-            #'industry':soup_profile.find('span',{'class':'Fw(600)'}),
+            'sector': sector,
+            'industry': industry,
             'current_price': soup.find('td', {'data-test': 'OPEN-value'}).text,
             'estimated_price': soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text,
             'forward_dividend': soup.find('td', {'data-test': 'DIVIDEND_AND_YIELD-value'}).text,
@@ -98,7 +97,6 @@ class YahooFinance:
         stocks = []
         url = f"https://finance.yahoo.com/most-active?offset=0&count={number_of_stoks_to_get.value}"
         requests_stocks = req.get(url=url, headers=cls.headers)
-        target_class = 'simpTblRow Bgc($hoverBgColor):h BdB Bdbc($seperatorColor) Bdbc($tableBorderBlue):h H(32px) Bgc($lv2BgColor) '
         soup = BeautifulSoup(requests_stocks.text, 'html.parser')
         results = soup.findAll('table')[0].findAll('tr')
         del results[0]
@@ -107,6 +105,25 @@ class YahooFinance:
             stocks.append(name.text)
 
         return stocks
+
+    @classmethod
+    def _get_sector_and_industry_of_stock(cls, stock_name: str) -> str:
+        """
+
+        :return: the sector and industry of the stock company.
+        """
+        url_profile = f'https://finance.yahoo.com/quote/{stock_name}/profile?p={stock_name}'
+        r_profile = req.get(url_profile, headers=cls.headers)
+        try:
+            soup_profile = BeautifulSoup(r_profile.text, 'html.parser')
+            profile_html = soup_profile.find('p', {'class': 'D(ib) Va(t)'})
+            profile_spans = profile_html.find_all('span', {'class': 'Fw(600)'})
+            sector = profile_spans[0].text
+            industry = profile_spans[1].text
+        except Exception:
+            sector = 'N/A'
+            industry = 'N/A'
+        return sector, industry
 
     @classmethod
     def stocks_info_to_excel_file(cls, stocks_info: list) -> any:
@@ -138,6 +155,8 @@ class YahooFinance:
         sheet.write(0, 4, "Profit in Percentage", style)
         sheet.write(0, 5, "avgEstimate", style)
         sheet.write(0, 6, "marketCap", style)
+        sheet.write(0, 7, "Sector", style)
+        sheet.write(0, 8, "Industry", style)
         exel_row = 1
         for stock in stocks_info:
             sheet.write(exel_row, 0, stock['stock_name'])
@@ -147,6 +166,8 @@ class YahooFinance:
             sheet.write(exel_row, 4, stock['profit_in_percentage'])
             sheet.write(exel_row, 5, stock['earning_average_estimate'])
             sheet.write(exel_row, 6, stock['market_cap'])
+            sheet.write(exel_row, 7, stock['sector'])
+            sheet.write(exel_row, 8, stock['industry'])
             exel_row += 1
 
     @staticmethod
