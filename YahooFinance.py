@@ -135,7 +135,7 @@ class YahooFinance:
         cls._create_stocks_info_sheet(stocks_info=stocks_info, work_book=wb)
         cls._create_estimated_profit_sheet(stocks_info=stocks_info, work_book=wb)
         cls._create_average_earning_estimation_sheet(stocks_info=stocks_info, work_book=wb)
-        cls._create_divident_sheet(stocks_info=stocks_info, work_book=wb)
+        cls._create_dividend_sheet(stocks_info=stocks_info, work_book=wb)
         wb.save("most_active_stocks_info.xls")
 
     @staticmethod
@@ -220,7 +220,7 @@ class YahooFinance:
             exel_row += 1
 
     @staticmethod
-    def _create_divident_sheet(stocks_info: list, work_book):
+    def _create_dividend_sheet(stocks_info: list, work_book):
         """
 
         :param stocks_info: list of dicts with stocks information
@@ -228,10 +228,10 @@ class YahooFinance:
         :return:
         """
         stocks_info_sorted = sorted(stocks_info, key=lambda d: d['profit_in_percentage'], reverse=True)
-        sheet = work_book.add_sheet("Top divident shared")
+        sheet = work_book.add_sheet("Top dividend shared")
         style = xlwt.easyxf('font: bold 1')
         sheet.write(0, 0, "Stock Name", style)
-        sheet.write(0, 1, "Divident", style)
+        sheet.write(0, 1, "Dividend", style)
         exel_row = 1
         for stock in stocks_info_sorted:
             sheet.write(exel_row, 0, stock['stock_name'])
