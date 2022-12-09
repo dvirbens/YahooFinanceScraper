@@ -11,7 +11,8 @@ class YahooFinance:
     """
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'}
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                      '(KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'}
 
     @classmethod
     def get_stock_info(cls, stock_name: str) -> dict:
@@ -68,7 +69,7 @@ class YahooFinance:
 
         try:
             earning_average_estimate = soup_ana.find_all('td', {'class': "Ta(end)"})[6].text
-        except Exception as e:
+        except Exception:
             earning_average_estimate = "N/A"
 
         stock = {
@@ -107,7 +108,7 @@ class YahooFinance:
         return stocks
 
     @classmethod
-    def _get_sector_and_industry_of_stock(cls, stock_name: str) -> str:
+    def _get_sector_and_industry_of_stock(cls, stock_name: str) -> [str, str]:
         """
 
         :return: the sector and industry of the stock company.
