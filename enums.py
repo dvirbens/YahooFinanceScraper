@@ -8,3 +8,4 @@ class NumberOfStocks(Enum):
     FIFTEEN = 15
     TWENTY = 20
     TWENTY_FIVE = 25
+    FIFTY = 50

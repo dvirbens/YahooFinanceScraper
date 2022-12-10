@@ -1,7 +1,7 @@
 from YahooFinance import YahooFinance
 from enums import NumberOfStocks
 
-stocks = YahooFinance.get_all_most_active_stocks(number_of_stoks_to_get=NumberOfStocks.FIVE)
+stocks = YahooFinance.get_all_most_active_stocks(number_of_stoks_to_get=NumberOfStocks.TEN)
 stocks_info = []
 cnt = 0
 

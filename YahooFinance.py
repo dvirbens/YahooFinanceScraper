@@ -81,7 +81,7 @@ class YahooFinance:
             'forward_dividend': soup.find('td', {'data-test': 'DIVIDEND_AND_YIELD-value'}).text,
             'earning_per_share': soup.find('td', {'data-test': 'EPS_RATIO-value'}).text,
             'profit': round(profit, 2),
-            'profit_in_percentage': f'{round(profit_percentage, 1)}%',
+            'profit_in_percentage': round(profit_percentage, 1),
             'earning_average_estimate': earning_average_estimate,
             'earning_average_estimate_percentage': round(avg_earning_in_percentage, 1),
             'market_cap': soup_mem.find('td', {'class': 'Fw(500) Ta(end) Pstart(10px) Miw(60px)'}).text
@@ -213,11 +213,17 @@ class YahooFinance:
         sheet.write(0, 4, "Profit in Percentage", style)
         exel_row = 1
         for stock in stocks_info_sorted:
+            profit = stock['profit']
+            profit_percentage = f'{stock["profit_in_percentage"]}%'
+            if profit == -1:
+                profit = 'N/A'
+                profit_percentage = 'N/A'
+
             sheet.write(exel_row, 0, stock['stock_name'])
             sheet.write(exel_row, 1, stock['current_price'])
             sheet.write(exel_row, 2, stock['estimated_price'])
-            sheet.write(exel_row, 3, stock['profit'])
-            sheet.write(exel_row, 4, stock['profit_in_percentage'])
+            sheet.write(exel_row, 3, profit)
+            sheet.write(exel_row, 4, profit_percentage)
             exel_row += 1
 
     @staticmethod
@@ -228,13 +234,17 @@ class YahooFinance:
         :param work_book:
         :return:
         """
-        stocks_info_sorted = sorted(stocks_info, key=lambda d: d['profit_in_percentage'], reverse=True)
         sheet = work_book.add_sheet("Top dividend shared")
         style = xlwt.easyxf('font: bold 1')
         sheet.write(0, 0, "Stock Name", style)
         sheet.write(0, 1, "Dividend", style)
         exel_row = 1
-        for stock in stocks_info_sorted:
-            sheet.write(exel_row, 0, stock['stock_name'])
-            sheet.write(exel_row, 1, stock['forward_dividend'])
-            exel_row += 1
+        not_relevant = 0
+        for stock in stocks_info:
+            dividend = stock['forward_dividend']
+            if dividend == 'N/A (N/A)':
+                not_relevant += 1
+            else:
+                sheet.write(exel_row, 0, stock['stock_name'])
+                sheet.write(exel_row, 1, dividend)
+                exel_row += 1
