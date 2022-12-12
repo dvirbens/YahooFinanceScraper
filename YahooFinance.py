@@ -10,12 +10,16 @@ class YahooFinance:
     class of yahoo finance data scraping
     """
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                      '(KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'}
 
-    @classmethod
-    def get_stock_info(cls, stock_name: str) -> dict:
+
+    def __init__(self):
+        """
+        class constructor
+        """
+        self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                                      '(KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'}
+
+    def get_stock_info(self, stock_name: str) -> dict:
         """
 
         :return: dictionary of stock information
@@ -37,9 +41,9 @@ class YahooFinance:
         url_ana = f'https://finance.yahoo.com/quote/{stock_name}/analysis?p={stock_name}'
         url_mem = f'https://finance.yahoo.com/quote/{stock_name}/key-statistics?p={stock_name}'
 
-        r = req.get(url, headers=cls.headers)
-        r_ana = req.get(url_ana, headers=cls.headers)
-        r_mem = req.get(url_mem, headers=cls.headers)
+        r = req.get(url, headers=self.headers)
+        r_ana = req.get(url_ana, headers=self.headers)
+        r_mem = req.get(url_mem, headers=self.headers)
 
         soup = BeautifulSoup(r.text, 'html.parser')
         soup_ana = BeautifulSoup(r_ana.text, 'html.parser')
@@ -48,7 +52,7 @@ class YahooFinance:
         profit = ""
         profit_percentage = 0
         target_estimate = soup.find('td', {'data-test': 'ONE_YEAR_TARGET_PRICE-value'}).text
-        sector, industry = cls._get_sector_and_industry_of_stock(stock_name=stock_name)
+        sector, industry = self._get_sector_and_industry_of_stock(stock_name=stock_name)
 
         if target_estimate == 'N/A':
             profit = -1
@@ -88,8 +92,7 @@ class YahooFinance:
         }
         return stock
 
-    @classmethod
-    def get_all_most_active_stocks(cls, number_of_stoks_to_get: NumberOfStocks) -> list:
+    def get_all_most_active_stocks(self, number_of_stoks_to_get: NumberOfStocks) -> list:
         """
 
         :return: list of number_of_stocks_to_get most active stocks symbol
@@ -97,7 +100,7 @@ class YahooFinance:
         """
         stocks = []
         url = f"https://finance.yahoo.com/most-active?offset=0&count={number_of_stoks_to_get.value}"
-        requests_stocks = req.get(url=url, headers=cls.headers)
+        requests_stocks = req.get(url=url, headers=self.headers)
         soup = BeautifulSoup(requests_stocks.text, 'html.parser')
         results = soup.findAll('table')[0].findAll('tr')
         del results[0]
@@ -107,14 +110,13 @@ class YahooFinance:
 
         return stocks
 
-    @classmethod
-    def _get_sector_and_industry_of_stock(cls, stock_name: str) -> [str, str]:
+    def _get_sector_and_industry_of_stock(self, stock_name: str) -> [str, str]:
         """
 
         :return: the sector and industry of the stock company.
         """
         url_profile = f'https://finance.yahoo.com/quote/{stock_name}/profile?p={stock_name}'
-        r_profile = req.get(url_profile, headers=cls.headers)
+        r_profile = req.get(url_profile, headers=self.headers)
         try:
             soup_profile = BeautifulSoup(r_profile.text, 'html.parser')
             profile_html = soup_profile.find('p', {'class': 'D(ib) Va(t)'})
@@ -126,21 +128,19 @@ class YahooFinance:
             industry = 'N/A'
         return sector, industry
 
-    @classmethod
-    def stocks_info_to_excel_file(cls, stocks_info: list) -> any:
+    def stocks_info_to_excel_file(self, stocks_info: list) -> any:
         """
 
         :return:
         """
         wb = xlwt.Workbook()
-        cls._create_stocks_info_sheet(stocks_info=stocks_info, work_book=wb)
-        cls._create_estimated_profit_sheet(stocks_info=stocks_info, work_book=wb)
-        cls._create_average_earning_estimation_sheet(stocks_info=stocks_info, work_book=wb)
-        cls._create_dividend_sheet(stocks_info=stocks_info, work_book=wb)
+        self._create_stocks_info_sheet(stocks_info=stocks_info, work_book=wb)
+        self._create_estimated_profit_sheet(stocks_info=stocks_info, work_book=wb)
+        self._create_average_earning_estimation_sheet(stocks_info=stocks_info, work_book=wb)
+        self._create_dividend_sheet(stocks_info=stocks_info, work_book=wb)
         wb.save("most_active_stocks_info.xls")
 
-    @staticmethod
-    def _create_stocks_info_sheet(stocks_info, work_book):
+    def _create_stocks_info_sheet(self, stocks_info, work_book):
         """
 
         :param stocks_info: list of dicts with stocks information
@@ -171,8 +171,7 @@ class YahooFinance:
             sheet.write(exel_row, 8, stock['industry'])
             exel_row += 1
 
-    @staticmethod
-    def _create_average_earning_estimation_sheet(stocks_info: list, work_book):
+    def _create_average_earning_estimation_sheet(self, stocks_info: list, work_book):
         """
 
         :param stocks_info: list of dicts with stocks information
@@ -195,8 +194,7 @@ class YahooFinance:
             sheet.write(exel_row, 3, f'{earning}%')
             exel_row += 1
 
-    @staticmethod
-    def _create_estimated_profit_sheet(stocks_info: list, work_book):
+    def _create_estimated_profit_sheet(self, stocks_info: list, work_book):
         """
 
         :param stocks_info: list of dicts with stocks information
@@ -226,8 +224,7 @@ class YahooFinance:
             sheet.write(exel_row, 4, profit_percentage)
             exel_row += 1
 
-    @staticmethod
-    def _create_dividend_sheet(stocks_info: list, work_book):
+    def _create_dividend_sheet(self, stocks_info: list, work_book):
         """
 
         :param stocks_info: list of dicts with stocks information
