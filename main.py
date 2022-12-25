@@ -11,10 +11,7 @@ def main():
     app = QApplication(sys.argv)
     window = AppGui(yf)
     window.add_items_to_combobox()
-
     app.exec_()
-
-    # yf.stocks_info_to_excel_file(stocks_info)
 
 
 if __name__ == '__main__':
