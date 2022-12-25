@@ -9,3 +9,7 @@ class NumberOfStocks(Enum):
     TWENTY = 20
     TWENTY_FIVE = 25
     FIFTY = 50
+
+    @staticmethod
+    def list():
+        return list(map(lambda c: f'{c.value} stocks', NumberOfStocks))
