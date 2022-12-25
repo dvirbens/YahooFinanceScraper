@@ -13,7 +13,8 @@ class AppGui(QMainWindow):
         super(AppGui, self).__init__()
         uic.loadUi("app_gui.ui", self)
         self.stocks_info = []
-        self.startButton.clicked.connect(self.button_clicked)
+        self.startButton.clicked.connect(self.start_button_clicked)
+        self.ExportBtn.clicked.connect(self.export_data_to_excel)
         self.yf = yf
         self.number_of_stocks = 5
         self.show()
@@ -21,7 +22,7 @@ class AppGui(QMainWindow):
     def add_items_to_combobox(self):
         self.NumberOfStocksCB.addItems(NumberOfStocks.list())
 
-    def button_clicked(self):
+    def start_button_clicked(self):
         self.startButton.setEnabled(False)
         self.number_of_stocks = int(self.NumberOfStocksCB.currentText())
         self.NumberOfStocksCB.setEnabled(False)
@@ -30,6 +31,9 @@ class AppGui(QMainWindow):
         self.worker.update_progres_bar.connect(self.evt_update_progressbar)
         self.worker.update_stocks_info.connect(self.evt_update_stocks_info)
         self.worker.finished.connect(self.evt_done_getting_stocks_info)
+
+    def export_data_to_excel(self):
+        self.yf.stocks_info_to_excel_file(stocks_info=self.stocks_info)
 
     def evt_update_stocks_info(self, val):
         self.stocks_info = val
@@ -41,6 +45,7 @@ class AppGui(QMainWindow):
         self.progress_msg.setText('Done')
         self.startButton.setEnabled(True)
         self.NumberOfStocksCB.setEnabled(True)
+        self.ExportBtn.setEnabled(True)
 
 
 class ThreadClass(QtCore.QThread):
