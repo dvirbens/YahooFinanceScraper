@@ -99,7 +99,7 @@ class YahooFinance:
                 Example:['TSLA', 'AMZN', 'AAPL', ....]
         """
         stocks = []
-        url = f"https://finance.yahoo.com/most-active?offset=0&count={number_of_stoks_to_get.value}"
+        url = f"https://finance.yahoo.com/most-active?offset=0&count={number_of_stoks_to_get}"
         requests_stocks = req.get(url=url, headers=self.headers)
         soup = BeautifulSoup(requests_stocks.text, 'html.parser')
         results = soup.findAll('table')[0].findAll('tr')

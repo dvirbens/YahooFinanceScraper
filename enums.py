@@ -12,4 +12,4 @@ class NumberOfStocks(Enum):
 
     @staticmethod
     def list():
-        return list(map(lambda c: f'{c.value} stocks', NumberOfStocks))
+        return list(map(lambda c: str(c.value), NumberOfStocks))

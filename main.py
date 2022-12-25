@@ -8,11 +8,8 @@ import sys
 
 def main():
     yf = YahooFinance()
-    stocks_number = NumberOfStocks.FIVE
-    stocks = yf.get_all_most_active_stocks(number_of_stoks_to_get=stocks_number)
-    print(stocks)
     app = QApplication(sys.argv)
-    window = AppGui(stocks, yf)
+    window = AppGui(yf)
     window.add_items_to_combobox()
 
     app.exec_()
