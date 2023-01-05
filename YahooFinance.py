@@ -10,8 +10,6 @@ class YahooFinance:
     class of yahoo finance data scraping
     """
 
-
-
     def __init__(self):
         """
         class constructor
@@ -68,8 +66,11 @@ class YahooFinance:
             avg_earning_in_percentage = -1
         else:
             esp = float(esp)
-            avg_earning = float(soup_ana.find_all('td', {'class': "Ta(end)"})[6].text)
-            avg_earning_in_percentage = ((avg_earning - esp) / esp) * 100
+            try:
+                avg_earning = float(soup_ana.find_all('td', {'class': "Ta(end)"})[6].text)
+                avg_earning_in_percentage = ((avg_earning - esp) / esp) * 100
+            except Exception:
+                avg_earning_in_percentage = -1
 
         try:
             earning_average_estimate = soup_ana.find_all('td', {'class': "Ta(end)"})[6].text
